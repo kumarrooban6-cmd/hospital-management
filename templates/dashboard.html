@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Dashboard - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Executive Dashboard</h3>
+        <p class="text-muted mb-0">Real-time clinical, operational, and financial indicators</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('patient_add') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+            <i class="fa-solid fa-plus me-1"></i> Add Patient
+        </a>
+        <a href="{{ url_for('appointment_book') }}" class="btn btn-primary btn-sm rounded-pill px-3">
+            <i class="fa-solid fa-calendar-check me-1"></i> Book Appointment
+        </a>
+    </div>
+</div>
+
+<!-- KPI Metric Cards Row -->
+<div class="row g-3 mb-4">
+    <!-- Total Patients -->
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card h-100 bg-white p-3 border-start border-primary border-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-semibold">PATIENTS</span>
+                <div class="metric-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fa-solid fa-hospital-user"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0 text-dark">{{ stats.total_patients }}</h2>
+            <small class="text-success"><i class="fa-solid fa-check me-1"></i>Total Registered</small>
+        </div>
+    </div>
+
+    <!-- Active Doctors -->
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card h-100 bg-white p-3 border-start border-success border-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-semibold">DOCTORS</span>
+                <div class="metric-icon bg-success bg-opacity-10 text-success">
+                    <i class="fa-solid fa-user-doctor"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0 text-dark">{{ stats.total_doctors }}</h2>
+            <small class="text-muted">Active On Duty</small>
+        </div>
+    </div>
+
+    <!-- Today's Appointments -->
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card h-100 bg-white p-3 border-start border-info border-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-semibold">TODAY'S VISITS</span>
+                <div class="metric-icon bg-info bg-opacity-10 text-info">
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0 text-dark">{{ stats.today_appointments }}</h2>
+            <small class="text-primary"><a href="{{ url_for('appointment_list') }}" class="text-decoration-none">View Schedule &rarr;</a></small>
+        </div>
+    </div>
+
+    <!-- Available Beds -->
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card h-100 bg-white p-3 border-start border-secondary border-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-semibold">BED VACANCY</span>
+                <div class="metric-icon bg-secondary bg-opacity-10 text-secondary">
+                    <i class="fa-solid fa-bed"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0 text-dark">{{ stats.available_beds }} <span class="fs-6 fw-normal text-muted">/ {{ stats.total_beds }}</span></h2>
+            <small class="text-muted">Beds Available</small>
+        </div>
+    </div>
+
+    <!-- Low Stock Medicines -->
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card h-100 bg-white p-3 border-start border-warning border-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-semibold">LOW STOCK</span>
+                <div class="metric-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0 text-dark">{{ stats.low_stock }}</h2>
+            <small class="text-danger">Meds below threshold</small>
+        </div>
+    </div>
+
+    <!-- Total Revenue -->
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="card metric-card h-100 bg-white p-3 border-start border-dark border-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted small fw-semibold">REVENUE</span>
+                <div class="metric-icon bg-dark bg-opacity-10 text-dark">
+                    <i class="fa-solid fa-dollar-sign"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0 text-dark">₹{{ "%.2f"|format(stats.total_revenue) }}</h2>
+            <small class="text-success"><i class="fa-solid fa-receipt me-1"></i>Paid Invoices</small>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Navigation Action Bar -->
+<div class="card bg-white mb-4 shadow-sm border-0">
+    <div class="card-body p-3">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <span class="fw-bold text-secondary small text-uppercase"><i class="fa-solid fa-bolt me-1 text-warning"></i> Quick Operations:</span>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('patient_add') }}" class="btn btn-sm btn-light border">
+                    <i class="fa-solid fa-user-plus text-primary me-1"></i> Register Patient
+                </a>
+                <a href="{{ url_for('doctor_add') }}" class="btn btn-sm btn-light border">
+                    <i class="fa-solid fa-user-doctor text-success me-1"></i> Add Doctor
+                </a>
+                <a href="{{ url_for('bed_list') }}" class="btn btn-sm btn-light border">
+                    <i class="fa-solid fa-procedures text-info me-1"></i> Allocate Bed
+                </a>
+                <a href="{{ url_for('pharmacy_list') }}" class="btn btn-sm btn-light border">
+                    <i class="fa-solid fa-prescription-bottle text-warning me-1"></i> Dispense Medicine
+                </a>
+                <a href="{{ url_for('billing_create') }}" class="btn btn-sm btn-light border">
+                    <i class="fa-solid fa-file-invoice text-dark me-1"></i> Generate Invoice
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Activity Tables -->
+<div class="row g-4">
+    <!-- Today's Appointments -->
+    <div class="col-lg-7">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="fw-bold text-dark">
+                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Today's Scheduled Appointments
+                </div>
+                <a href="{{ url_for('appointment_list') }}" class="btn btn-sm btn-outline-primary rounded-pill">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Patient</th>
+                                <th>Doctor / Dept</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if stats.upcoming_appointments %}
+                                {% for app in stats.upcoming_appointments %}
+                                <tr>
+                                    <td class="fw-semibold text-primary">
+                                        <i class="fa-regular fa-clock me-1"></i> {{ app.appointment_time }}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ app.patient_name }}</div>
+                                        <small class="text-muted">{{ app.reason or 'Consultation' }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ app.doctor_name }}</div>
+                                        <span class="badge bg-light text-secondary border">{{ app.specialization }}</span>
+                                    </td>
+                                    <td>
+                                        {% if app.status == 'Scheduled' %}
+                                            <span class="badge badge-soft-primary px-2 py-1">Scheduled</span>
+                                        {% elif app.status == 'Completed' %}
+                                            <span class="badge badge-soft-success px-2 py-1">Completed</span>
+                                        {% elif app.status == 'Cancelled' %}
+                                            <span class="badge badge-soft-danger px-2 py-1">Cancelled</span>
+                                        {% else %}
+                                            <span class="badge badge-soft-warning px-2 py-1">{{ app.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('patient_view', patient_id=app.patient_id) }}" class="btn btn-sm btn-outline-secondary" title="View Patient Profile">
+                                            <i class="fa-solid fa-arrow-right"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="fa-regular fa-calendar-xmark fs-3 mb-2 d-block text-secondary"></i>
+                                        No appointments scheduled for today.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Billing Activities -->
+    <div class="col-lg-5">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="fw-bold text-dark">
+                    <i class="fa-solid fa-receipt text-success me-2"></i> Recent Invoices
+                </div>
+                <a href="{{ url_for('billing_list') }}" class="btn btn-sm btn-outline-success rounded-pill">All Invoices</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Patient</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th class="text-end">Print</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if stats.recent_invoices %}
+                                {% for inv in stats.recent_invoices %}
+                                <tr>
+                                    <td class="fw-bold font-monospace text-primary small">{{ inv.invoice_uid }}</td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ inv.patient_name }}</div>
+                                        <small class="text-muted">{{ inv.invoice_date }}</small>
+                                    </td>
+                                    <td class="fw-bold text-dark">₹{{ "%.2f"|format(inv.total_amount) }}</td>
+                                    <td>
+                                        {% if inv.payment_status == 'Paid' %}
+                                            <span class="badge badge-soft-success">Paid</span>
+                                        {% elif inv.payment_status == 'Pending' %}
+                                            <span class="badge badge-soft-warning">Pending</span>
+                                        {% else %}
+                                            <span class="badge badge-soft-danger">Unpaid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('billing_invoice', invoice_id=inv.id) }}" class="btn btn-sm btn-light border text-primary">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No invoices generated yet.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

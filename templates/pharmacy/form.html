@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Medicine - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">{{ action }} Pharmaceutical Item</h3>
+                <p class="text-muted mb-0">Manage medicine inventory stock, pricing, and expiry monitoring</p>
+            </div>
+            <a href="{{ url_for('pharmacy_list') }}" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Pharmacy
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="card-title mb-0 fw-bold text-primary">
+                    <i class="fa-solid fa-pills me-2"></i> Medicine Details
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Medicine Brand / Generic Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Amoxicillin 500mg" value="{{ medicine.name if medicine else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Therapeutic Category <span class="text-danger">*</span></label>
+                            <input type="text" name="category" class="form-control" placeholder="e.g. Antibiotic, Analgesic, Cardiovascular" value="{{ medicine.category if medicine else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Dosage & Form <span class="text-danger">*</span></label>
+                            <input type="text" name="dosage" class="form-control" placeholder="e.g. Oral Tablet, 100ml Syrup, IV Injection" value="{{ medicine.dosage if medicine else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Stock Quantity (Units) <span class="text-danger">*</span></label>
+                            <input type="number" name="stock_quantity" class="form-control" min="0" placeholder="e.g. 100" value="{{ medicine.stock_quantity if medicine else '50' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Unit Sale Price (₹) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="unit_price" class="form-control" placeholder="e.g. 15.00" value="{{ medicine.unit_price if medicine else '10.00' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Batch Expiry Date <span class="text-danger">*</span></label>
+                            <input type="date" name="expiry_date" class="form-control" value="{{ medicine.expiry_date if medicine else '' }}" required>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Manufacturer / Pharmaceutical Company <span class="text-danger">*</span></label>
+                            <input type="text" name="manufacturer" class="form-control" placeholder="e.g. Pfizer, Novartis, GSK, Sanofi" value="{{ medicine.manufacturer if medicine else '' }}" required>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('pharmacy_list') }}" class="btn btn-light border px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save to Inventory
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

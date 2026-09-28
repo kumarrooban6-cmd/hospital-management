@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Doctor - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">{{ action }} Medical Practitioner</h3>
+                <p class="text-muted mb-0">Manage doctor credentials, consulting hours, and department details</p>
+            </div>
+            <a href="{{ url_for('doctor_list') }}" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Roster
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="card-title mb-0 fw-bold text-primary">
+                    <i class="fa-solid fa-user-doctor me-2"></i> Doctor Profile Details
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Doctor Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Dr. Jane Smith" value="{{ doctor.name if doctor else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Specialization / Department <span class="text-danger">*</span></label>
+                            <input type="text" name="specialization" class="form-control" placeholder="e.g. Cardiology, Pediatrics, Neurology" value="{{ doctor.specialization if doctor else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Qualifications & Degrees <span class="text-danger">*</span></label>
+                            <input type="text" name="qualification" class="form-control" placeholder="e.g. MBBS, MD, FRCS" value="{{ doctor.qualification if doctor else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Consultation Fee (₹) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="consultation_fee" class="form-control" placeholder="e.g. 100.00" value="{{ doctor.consultation_fee if doctor else '80.00' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Contact Phone <span class="text-danger">*</span></label>
+                            <input type="text" name="phone" class="form-control" placeholder="+1 (555) 000-0000" value="{{ doctor.phone if doctor else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" placeholder="doctor@hospital.com" value="{{ doctor.email if doctor else '' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Available Working Days <span class="text-danger">*</span></label>
+                            <input type="text" name="available_days" class="form-control" placeholder="e.g. Mon, Wed, Fri or Daily" value="{{ doctor.available_days if doctor else 'Mon - Fri' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Working Hours / Slot <span class="text-danger">*</span></label>
+                            <input type="text" name="available_time" class="form-control" placeholder="e.g. 09:00 AM - 01:00 PM" value="{{ doctor.available_time if doctor else '09:00 AM - 02:00 PM' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Room / OPD Clinic No <span class="text-danger">*</span></label>
+                            <input type="text" name="room_number" class="form-control" placeholder="e.g. Room 204" value="{{ doctor.room_number if doctor else 'Room 101' }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Current Duty Status</label>
+                            <select name="status" class="form-select">
+                                <option value="Active" {% if not doctor or doctor.status == 'Active' %}selected{% endif %}>Active (Available)</option>
+                                <option value="On Leave" {% if doctor and doctor.status == 'On Leave' %}selected{% endif %}>On Leave</option>
+                                <option value="Inactive" {% if doctor and doctor.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('doctor_list') }}" class="btn btn-light border px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Doctor Record
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

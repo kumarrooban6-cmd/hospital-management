@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Invoice - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Generate Patient Invoice</h3>
+                <p class="text-muted mb-0">Compile hospital fees, inpatient room tariffs, medications, and taxes</p>
+            </div>
+            <a href="{{ url_for('billing_list') }}" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Billing
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="card-title mb-0 fw-bold text-success">
+                    <i class="fa-solid fa-receipt me-2"></i> Invoice Calculation Form
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" id="invoiceForm">
+                    <div class="row g-3">
+                        <!-- Patient Select -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Patient Bill Recipient <span class="text-danger">*</span></label>
+                            <select name="patient_id" class="form-select" required>
+                                <option value="" disabled {% if not preselected_patient %}selected{% endif %}>Select patient...</option>
+                                {% for p in patients %}
+                                    <option value="{{ p.id }}" {% if preselected_patient and preselected_patient|int == p.id %}selected{% endif %}>
+                                        {{ p.name }} ({{ p.patient_uid }}) - Phone: {{ p.phone }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Itemized Charges -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Physician Consultation Fee (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" min="0" name="doctor_fee" id="doctor_fee" class="form-control calc-input" placeholder="0.00" value="80.00">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Room & Bed Charges (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" min="0" name="room_charges" id="room_charges" class="form-control calc-input" placeholder="0.00" value="0.00">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Pharmacy / Medicine Charges (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" min="0" name="medicine_charges" id="medicine_charges" class="form-control calc-input" placeholder="0.00" value="0.00">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Diagnostic Tests & Other Services (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" min="0" name="other_charges" id="other_charges" class="form-control calc-input" placeholder="0.00" value="0.00">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Discount Concession (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" min="0" name="discount" id="discount" class="form-control calc-input" placeholder="0.00" value="0.00">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tax Rate (%)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">%</span>
+                                <input type="number" step="0.1" min="0" max="100" name="tax_percent" id="tax_percent" class="form-control calc-input" value="5.0">
+                            </div>
+                        </div>
+
+                        <!-- Live Calculation Summary Card -->
+                        <div class="col-12 my-2">
+                            <div class="p-3 bg-light rounded border">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Subtotal (before tax):</span>
+                                    <span class="fw-semibold" id="displaySubtotal">₹0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Estimated Tax Amount:</span>
+                                    <span class="fw-semibold" id="displayTax">₹0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between pt-2 border-top">
+                                    <span class="fw-bold fs-5 text-dark">Estimated Grand Total:</span>
+                                    <span class="fw-bold fs-4 text-success" id="displayTotal">₹0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Status & Method -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Payment Status</label>
+                            <select name="payment_status" class="form-select">
+                                <option value="Paid">Paid (Settled)</option>
+                                <option value="Pending" selected>Pending Payment</option>
+                                <option value="Unpaid">Unpaid</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="Cash" selected>Cash</option>
+                                <option value="Credit Card">Credit / Debit Card</option>
+                                <option value="UPI">UPI / Digital Transfer</option>
+                                <option value="Insurance">Health Insurance Coverage</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Invoice Notes & Remarks</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Inpatient settlement, OPD prescription, lab investigation report package"></textarea>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('billing_list') }}" class="btn btn-light border px-4">Cancel</a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Generate & Issue Invoice
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function calculateInvoice() {
+        const doc = parseFloat(document.getElementById("doctor_fee").value) || 0;
+        const room = parseFloat(document.getElementById("room_charges").value) || 0;
+        const med = parseFloat(document.getElementById("medicine_charges").value) || 0;
+        const other = parseFloat(document.getElementById("other_charges").value) || 0;
+        const disc = parseFloat(document.getElementById("discount").value) || 0;
+        const taxRate = parseFloat(document.getElementById("tax_percent").value) || 0;
+
+        let subtotal = (doc + room + med + other) - disc;
+        if (subtotal < 0) subtotal = 0;
+        const tax = subtotal * (taxRate / 100);
+        const total = subtotal + tax;
+
+        document.getElementById("displaySubtotal").innerText = "₹" + subtotal.toFixed(2);
+        document.getElementById("displayTax").innerText = "₹" + tax.toFixed(2);
+        document.getElementById("displayTotal").innerText = "₹" + total.toFixed(2);
+    }
+
+    document.querySelectorAll(".calc-input").forEach(input => {
+        input.addEventListener("input", calculateInvoice);
+    });
+
+    calculateInvoice();
+</script>
+{% endblock %}

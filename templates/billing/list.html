@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Billing & Invoicing - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Billing & Invoices Management</h3>
+        <p class="text-muted mb-0">Generate itemized hospital receipts, track payments, and manage accounts</p>
+    </div>
+    <a href="{{ url_for('billing_create') }}" class="btn btn-success rounded-pill px-3 shadow-sm">
+        <i class="fa-solid fa-file-invoice-dollar me-1"></i> Generate New Invoice
+    </a>
+</div>
+
+<!-- Invoices Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Invoice Date</th>
+                        <th>Patient</th>
+                        <th>Breakdown (Dr / Bed / Meds)</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Method</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if invoices %}
+                        {% for inv in invoices %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('billing_invoice', invoice_id=inv.id) }}" class="fw-bold font-monospace text-decoration-none text-primary">
+                                    {{ inv.invoice_uid }}
+                                </a>
+                            </td>
+                            <td>{{ inv.invoice_date }}</td>
+                            <td>
+                                <a href="{{ url_for('patient_view', patient_id=inv.patient_id) }}" class="fw-bold text-decoration-none text-dark">
+                                    {{ inv.patient_name }}
+                                </a>
+                                <div class="small text-muted">{{ inv.patient_uid }}</div>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    Dr: ₹{{ "%.2f"|format(inv.doctor_fee) }} | Bed: ₹{{ "%.2f"|format(inv.room_charges) }} | Med: ₹{{ "%.2f"|format(inv.medicine_charges) }}
+                                </small>
+                            </td>
+                            <td class="fw-bold text-dark fs-6">₹{{ "%.2f"|format(inv.total_amount) }}</td>
+                            <td>
+                                {% if inv.payment_status == 'Paid' %}
+                                    <span class="badge badge-soft-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i> Paid</span>
+                                {% elif inv.payment_status == 'Pending' %}
+                                    <span class="badge badge-soft-warning px-2 py-1"><i class="fa-solid fa-clock me-1"></i> Pending</span>
+                                {% else %}
+                                    <span class="badge badge-soft-danger px-2 py-1"><i class="fa-solid fa-circle-exclamation me-1"></i> Unpaid</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ inv.payment_method }}</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('billing_invoice', invoice_id=inv.id) }}" class="btn btn-sm btn-outline-primary" title="View & Print Official Receipt">
+                                        <i class="fa-solid fa-print me-1"></i> Receipt
+                                    </a>
+                                    <form method="POST" action="{{ url_for('billing_delete', invoice_id=inv.id) }}" class="d-inline" onsubmit="return confirm('Delete this invoice?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">No invoices recorded yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

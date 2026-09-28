@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Appointment Schedule - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Outpatient Appointments</h3>
+        <p class="text-muted mb-0">Track bookings, consultation sessions, doctor allocations, and diagnosis remarks</p>
+    </div>
+    <a href="{{ url_for('appointment_book') }}" class="btn btn-primary rounded-pill px-3 shadow-sm">
+        <i class="fa-solid fa-calendar-plus me-1"></i> Book New Appointment
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('appointment_list') }}" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <label class="form-label small text-muted mb-1">Filter by Date</label>
+                <input type="date" name="date" value="{{ date_filter }}" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Filter by Status</label>
+                <select name="status" class="form-select">
+                    <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+                    <option value="Scheduled" {% if status_filter == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                    <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+                    <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2 align-self-end">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter me-1"></i> Apply</button>
+                {% if date_filter or (status_filter and status_filter != 'All') %}
+                    <a href="{{ url_for('appointment_list') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark"></i></a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Appointments Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Schedule</th>
+                        <th>Patient</th>
+                        <th>Assigned Doctor</th>
+                        <th>Symptoms / Reason</th>
+                        <th>Clinical Notes / Diagnosis</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if appointments %}
+                        {% for app in appointments %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-light text-primary border font-monospace px-2 py-1">{{ app.appointment_uid }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ app.appointment_date }}</div>
+                                <div class="small text-primary"><i class="fa-regular fa-clock me-1"></i>{{ app.appointment_time }}</div>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('patient_view', patient_id=app.patient_id) }}" class="fw-bold text-decoration-none text-dark">
+                                    {{ app.patient_name }}
+                                </a>
+                                <div class="text-muted small"><i class="fa-solid fa-phone me-1"></i>{{ app.patient_phone }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ app.doctor_name }}</div>
+                                <span class="badge bg-light text-secondary border">{{ app.specialization }} ({{ app.room_number }})</span>
+                            </td>
+                            <td>
+                                <small class="text-dark">{{ app.reason or 'Consultation' }}</small>
+                            </td>
+                            <td>
+                                <small class="text-muted fst-italic">{{ app.diagnosis or 'No clinical remarks recorded' }}</small>
+                            </td>
+                            <td>
+                                {% if app.status == 'Scheduled' %}
+                                    <span class="badge badge-soft-primary px-2 py-1">Scheduled</span>
+                                {% elif app.status == 'Completed' %}
+                                    <span class="badge badge-soft-success px-2 py-1">Completed</span>
+                                {% elif app.status == 'Cancelled' %}
+                                    <span class="badge badge-soft-danger px-2 py-1">Cancelled</span>
+                                {% else %}
+                                    <span class="badge badge-soft-warning px-2 py-1">{{ app.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <!-- Status Modal Trigger Button -->
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#statusModal{{ app.id }}" title="Update Status & Clinical Notes">
+                                        <i class="fa-solid fa-notes-medical"></i>
+                                    </button>
+                                    <form method="POST" action="{{ url_for('appointment_delete', appointment_id=app.id) }}" class="d-inline" onsubmit="return confirm('Cancel and delete this appointment?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancel Appointment">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Status Update Modal -->
+                                <div class="modal fade text-start" id="statusModal{{ app.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form method="POST" action="{{ url_for('appointment_update_status', appointment_id=app.id) }}">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold">Update Appointment - {{ app.appointment_uid }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Consultation Status</label>
+                                                        <select name="status" class="form-select">
+                                                            <option value="Scheduled" {% if app.status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                                                            <option value="Completed" {% if app.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                                            <option value="Cancelled" {% if app.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Doctor Clinical Findings / Diagnosis</label>
+                                                        <textarea name="diagnosis" class="form-control" rows="3" placeholder="Enter clinical diagnosis, observations, or follow-up instructions...">{{ app.diagnosis or '' }}</textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-regular fa-calendar-xmark fs-2 mb-2 d-block text-secondary"></i>
+                                No appointments found for the selected criteria.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

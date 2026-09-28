@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Profile - {{ record.patient.name }} - MediCare HMS{% endblock %}
+
+{% block content %}
+<!-- Top Header & Actions -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('patient_list') }}" class="text-decoration-none">Patients</a></li>
+                <li class="breadcrumb-item active">{{ record.patient.name }}</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold text-dark mb-0">{{ record.patient.name }}</h3>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('appointment_book', patient_id=record.patient.id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+            <i class="fa-solid fa-calendar-plus me-1"></i> Book Appointment
+        </a>
+        <a href="{{ url_for('billing_create', patient_id=record.patient.id) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+            <i class="fa-solid fa-file-invoice me-1"></i> Generate Bill
+        </a>
+        <a href="{{ url_for('patient_edit', patient_id=record.patient.id) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="fa-solid fa-pen me-1"></i> Edit Profile
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Patient Demographic Card -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 sticky-top" style="top: 1rem;">
+            <div class="card-body text-center p-4 border-bottom">
+                <div class="avatar-wrapper mb-3 mx-auto d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 80px; height: 80px; font-size: 2rem;">
+                    <i class="fa-solid fa-user-injured"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">{{ record.patient.name }}</h4>
+                <span class="badge bg-light text-primary border font-monospace px-3 py-1 mb-2">{{ record.patient.patient_uid }}</span>
+                <div class="d-flex justify-content-center gap-2 mt-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                        {{ record.patient.age }} Years
+                    </span>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                        {{ record.patient.gender }}
+                    </span>
+                    {% if record.patient.blood_group %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                            <i class="fa-solid fa-droplet me-1"></i>{{ record.patient.blood_group }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-secondary text-uppercase small mb-3">Contact & Clinical Information</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-phone text-muted mt-1"></i>
+                        <div>
+                            <div class="text-muted small">Phone Number</div>
+                            <span class="fw-semibold">{{ record.patient.phone }}</span>
+                        </div>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-envelope text-muted mt-1"></i>
+                        <div>
+                            <div class="text-muted small">Email Address</div>
+                            <span>{{ record.patient.email or 'None provided' }}</span>
+                        </div>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-location-dot text-muted mt-1"></i>
+                        <div>
+                            <div class="text-muted small">Address</div>
+                            <span>{{ record.patient.address or 'None provided' }}</span>
+                        </div>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-phone-volume text-danger mt-1"></i>
+                        <div>
+                            <div class="text-muted small">Emergency Contact</div>
+                            <span class="text-danger fw-semibold">{{ record.patient.emergency_contact or 'None' }}</span>
+                        </div>
+                    </li>
+                    <li class="d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-notes-medical text-warning mt-1"></i>
+                        <div>
+                            <div class="text-muted small">Medical History & Allergies</div>
+                            <div class="p-2 bg-light rounded mt-1 small border">{{ record.patient.medical_history or 'No recorded medical history or allergies.' }}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Medical Records Tabs -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white p-0 border-bottom">
+                <ul class="nav nav-tabs card-header-tabs m-0 px-3" id="patientTab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active py-3" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button">
+                            <i class="fa-solid fa-calendar-check me-1"></i> Appointments ({{ record.appointments|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link py-3" id="admissions-tab" data-bs-toggle="tab" data-bs-target="#admissions" type="button">
+                            <i class="fa-solid fa-bed me-1"></i> Bed Stays ({{ record.admissions|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link py-3" id="prescriptions-tab" data-bs-toggle="tab" data-bs-target="#prescriptions" type="button">
+                            <i class="fa-solid fa-pills me-1"></i> Prescriptions ({{ record.prescriptions|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link py-3" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices" type="button">
+                            <i class="fa-solid fa-receipt me-1"></i> Invoices ({{ record.invoices|length }})
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body p-4">
+                <div class="tab-content" id="patientTabContent">
+                    <!-- Tab 1: Appointments -->
+                    <div class="tab-pane fade show active" id="appointments">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Scheduled Consultations & Visits</h6>
+                            <a href="{{ url_for('appointment_book', patient_id=record.patient.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-plus me-1"></i> Book New
+                            </a>
+                        </div>
+                        {% if record.appointments %}
+                            <div class="table-responsive">
+                                <table class="table table-hover table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date & Time</th>
+                                            <th>Doctor</th>
+                                            <th>Symptoms/Reason</th>
+                                            <th>Diagnosis</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for app in record.appointments %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ app.appointment_date }}</div>
+                                                <small class="text-primary">{{ app.appointment_time }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">{{ app.doctor_name }}</div>
+                                                <small class="text-muted">{{ app.specialization }}</small>
+                                            </td>
+                                            <td>{{ app.reason or 'General consultation' }}</td>
+                                            <td class="small">{{ app.diagnosis or 'Pending visit' }}</td>
+                                            <td>
+                                                {% if app.status == 'Scheduled' %}
+                                                    <span class="badge badge-soft-primary">{{ app.status }}</span>
+                                                {% elif app.status == 'Completed' %}
+                                                    <span class="badge badge-soft-success">{{ app.status }}</span>
+                                                {% else %}
+                                                    <span class="badge badge-soft-danger">{{ app.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center py-4">No appointment history found for this patient.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tab 2: Bed Admissions -->
+                    <div class="tab-pane fade" id="admissions">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Inpatient Bed Admission History</h6>
+                            <a href="{{ url_for('bed_list') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-procedures me-1"></i> Go to Bed Management
+                            </a>
+                        </div>
+                        {% if record.admissions %}
+                            <div class="table-responsive">
+                                <table class="table table-hover table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Bed No</th>
+                                            <th>Ward Type</th>
+                                            <th>Admitted Date</th>
+                                            <th>Discharge Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for adm in record.admissions %}
+                                        <tr>
+                                            <td class="fw-bold text-primary">{{ adm.bed_number }}</td>
+                                            <td>{{ adm.ward_type }} (₹ {{ adm.charge_per_day }}/day)</td>
+                                            <td>{{ adm.admitted_at }}</td>
+                                            <td>{{ adm.discharged_at or 'Currently Admitted' }}</td>
+                                            <td>
+                                                {% if adm.status == 'Admitted' %}
+                                                    <span class="badge badge-soft-warning">Active Admission</span>
+                                                {% else %}
+                                                    <span class="badge badge-soft-success">Discharged</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center py-4">No hospital bed admissions recorded.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tab 3: Prescriptions -->
+                    <div class="tab-pane fade" id="prescriptions">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Dispensed Prescriptions & Pharmacy Orders</h6>
+                            <a href="{{ url_for('pharmacy_list') }}" class="btn btn-sm btn-outline-warning">
+                                <i class="fa-solid fa-prescription-bottle me-1"></i> Dispense Meds
+                            </a>
+                        </div>
+                        {% if record.prescriptions %}
+                            <div class="table-responsive">
+                                <table class="table table-hover table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Medicine</th>
+                                            <th>Qty</th>
+                                            <th>Instructions</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rx in record.prescriptions %}
+                                        <tr>
+                                            <td>{{ rx.prescribed_date }}</td>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ rx.medicine_name }}</div>
+                                                <small class="text-muted">{{ rx.dosage }}</small>
+                                            </td>
+                                            <td class="fw-bold">{{ rx.quantity }}</td>
+                                            <td class="small">{{ rx.dosage_instructions }}</td>
+                                            <td class="fw-semibold text-success">₹{{ "%.2f"|format(rx.total_price) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center py-4">No pharmacy prescriptions dispensed yet.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tab 4: Invoices -->
+                    <div class="tab-pane fade" id="invoices">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Billing & Payment Records</h6>
+                            <a href="{{ url_for('billing_create', patient_id=record.patient.id) }}" class="btn btn-sm btn-outline-success">
+                                <i class="fa-solid fa-plus me-1"></i> New Invoice
+                            </a>
+                        </div>
+                        {% if record.invoices %}
+                            <div class="table-responsive">
+                                <table class="table table-hover table-custom mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice UID</th>
+                                            <th>Date</th>
+                                            <th>Total Amount</th>
+                                            <th>Status</th>
+                                            <th>Method</th>
+                                            <th class="text-end">Print Receipt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for inv in record.invoices %}
+                                        <tr>
+                                            <td class="fw-bold font-monospace text-primary">{{ inv.invoice_uid }}</td>
+                                            <td>{{ inv.invoice_date }}</td>
+                                            <td class="fw-bold">₹{{ "%.2f"|format(inv.total_amount) }}</td>
+                                            <td>
+                                                {% if inv.payment_status == 'Paid' %}
+                                                    <span class="badge badge-soft-success">Paid</span>
+                                                {% elif inv.payment_status == 'Pending' %}
+                                                    <span class="badge badge-soft-warning">Pending</span>
+                                                {% else %}
+                                                    <span class="badge badge-soft-danger">Unpaid</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ inv.payment_method }}</td>
+                                            <td class="text-end">
+                                                <a href="{{ url_for('billing_invoice', invoice_id=inv.id) }}" class="btn btn-sm btn-light border text-primary">
+                                                    <i class="fa-solid fa-print me-1"></i> View Receipt
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center py-4">No billing records found for this patient.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

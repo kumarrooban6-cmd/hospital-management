@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Database Explorer - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">
+            <i class="fa-solid fa-database text-primary me-2"></i> Database Explorer
+        </h3>
+        <p class="text-muted mb-0">Live SQLite Database inspection for <code>hospital.db</code></p>
+    </div>
+    <span class="badge bg-light text-dark border px-3 py-2">
+        <i class="fa-solid fa-hard-drive me-1 text-success"></i> File: <strong>hospital.db</strong>
+    </span>
+</div>
+
+<!-- Table Selection Badges -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body p-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="fw-bold text-muted small text-uppercase me-2">Select Table:</span>
+            {% for t in tables %}
+                <a href="{{ url_for('db_explorer', table=t.name) }}" 
+                   class="btn btn-sm {% if selected_table == t.name %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">
+                    <i class="fa-solid fa-table me-1"></i> {{ t.name }}
+                    <span class="badge bg-white text-dark ms-1 rounded-pill">{{ t.count }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- SQL Query Runner -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-dark"><i class="fa-solid fa-terminal text-secondary me-2"></i> Run Custom SQL Query (Read-Only)</span>
+    </div>
+    <div class="card-body p-3">
+        <form method="POST" action="{{ url_for('db_explorer', table=selected_table) }}">
+            <div class="input-group">
+                <span class="input-group-text font-monospace bg-light">SQL</span>
+                <input type="text" name="custom_sql" class="form-control font-monospace" placeholder="e.g. SELECT id, name, phone FROM patients WHERE age > 30" value="{{ current_query or '' }}">
+                <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-play me-1"></i> Execute</button>
+            </div>
+            {% if query_error %}
+                <div class="text-danger small mt-2">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i> {{ query_error }}
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Table Records View -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold text-dark mb-0">
+            Table: <span class="text-primary font-monospace">{{ selected_table }}</span>
+            <span class="badge bg-light text-muted border ms-2">{{ rows|length }} records found</span>
+        </h5>
+        <div class="text-muted small">
+            Columns: {{ columns|join(', ') }}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 550px;">
+            <table class="table table-hover table-bordered table-striped mb-0 font-monospace small">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        {% for col in columns %}
+                            <th class="py-2 px-3 text-nowrap bg-light">{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if rows %}
+                        {% for row in rows %}
+                        <tr>
+                            {% for col in columns %}
+                                <td class="py-2 px-3 text-nowrap">
+                                    {% if row[col] is none %}
+                                        <span class="text-muted fst-italic">NULL</span>
+                                    {% else %}
+                                        {{ row[col] }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ columns|length }}" class="text-center py-5 text-muted font-sans-serif">
+                                Table is empty or no matching records found.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

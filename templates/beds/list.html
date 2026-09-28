@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Inpatients & Bed Allocation - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Inpatient Wards & Bed Allocation</h3>
+        <p class="text-muted mb-0">Monitor room occupancy, allocate admissions, and manage patient discharge</p>
+    </div>
+    <button type="button" class="btn btn-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#admitModal">
+        <i class="fa-solid fa-bed-pulse me-1"></i> Admit Patient to Bed
+    </button>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 border-0 shadow-sm border-start border-primary border-4 bg-white">
+            <span class="text-muted small fw-semibold">TOTAL HOSPITAL BEDS</span>
+            <h3 class="fw-bold mb-0 text-dark">{{ beds|length }}</h3>
+            <small class="text-muted">Configured across all wards</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 border-0 shadow-sm border-start border-success border-4 bg-white">
+            <span class="text-muted small fw-semibold">AVAILABLE / VACANT BEDS</span>
+            <h3 class="fw-bold mb-0 text-success">{{ available_beds|length }}</h3>
+            <small class="text-success">Ready for immediate admission</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 border-0 shadow-sm border-start border-danger border-4 bg-white">
+            <span class="text-muted small fw-semibold">OCCUPIED BEDS</span>
+            <h3 class="fw-bold mb-0 text-danger">{{ occupied_beds|length }}</h3>
+            <small class="text-muted">Inpatient care active</small>
+        </div>
+    </div>
+</div>
+
+<!-- Ward Bed Grid -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-hotel text-primary me-2"></i> Ward Bed Matrix</h5>
+        <div class="d-flex gap-3 small">
+            <span class="d-flex align-items-center gap-1"><span class="badge bg-success p-1 rounded-circle"> </span> Available</span>
+            <span class="d-flex align-items-center gap-1"><span class="badge bg-danger p-1 rounded-circle"> </span> Occupied</span>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-3">
+            {% for bed in beds %}
+            <div class="col-xl-4 col-md-6">
+                <div class="card h-100 border {% if bed.status == 'Available' %}border-success-subtle bg-success-subtle bg-opacity-10{% else %}border-danger-subtle bg-danger-subtle bg-opacity-10{% endif %}">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fs-5 fw-bold font-monospace text-dark">{{ bed.bed_number }}</span>
+                            <span class="badge {% if bed.status == 'Available' %}bg-success text-white{% else %}bg-danger text-white{% endif %} px-2 py-1">
+                                {{ bed.status }}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-light text-dark border">{{ bed.ward_type }}</span>
+                            <span class="text-muted small ms-1">₹{{ "%.2f"|format(bed.charge_per_day) }} / day</span>
+                        </div>
+                        <small class="text-muted d-block mb-3">{{ bed.description }}</small>
+
+                        {% if bed.status == 'Occupied' and bed.patient_name %}
+                            <div class="p-2 bg-white rounded border border-danger-subtle mb-3">
+                                <div class="small text-muted">Currently Occupied By:</div>
+                                <div class="fw-bold text-dark">{{ bed.patient_name }}</div>
+                                <div class="small text-muted">Admitted: <span class="fw-semibold">{{ bed.admitted_at }}</span></div>
+                            </div>
+                            <form method="POST" action="{{ url_for('bed_discharge', allocation_id=bed.allocation_id) }}" onsubmit="return confirm('Discharge patient and release this bed?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                    <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Discharge Patient
+                                </button>
+                            </form>
+                        {% else %}
+                            <button type="button" class="btn btn-sm btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#admitModal" onclick="document.getElementById('modalBedSelect').value='{{ bed.id }}'">
+                                <i class="fa-solid fa-user-plus me-1"></i> Admit to this Bed
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Admission Modal -->
+<div class="modal fade" id="admitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('bed_allocate') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Inpatient Admission & Bed Allocation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Patient <span class="text-danger">*</span></label>
+                        <select name="patient_id" class="form-select" required>
+                            <option value="" disabled selected>Choose registered patient...</option>
+                            {% for p in patients %}
+                                <option value="{{ p.id }}">{{ p.name }} ({{ p.patient_uid }}) - {{ p.phone }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Bed <span class="text-danger">*</span></label>
+                        <select name="bed_id" id="modalBedSelect" class="form-select" required>
+                            <option value="" disabled selected>Choose available bed...</option>
+                            {% for b in available_beds %}
+                                <option value="{{ b.id }}">{{ b.bed_number }} - {{ b.ward_type }} (₹{{ "%.2f"|format(b.charge_per_day) }}/day)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Admission Reason / Clinical Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Condition, attending doctor, triage notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Admission</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

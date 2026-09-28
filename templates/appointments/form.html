@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment - MediCare HMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Book Outpatient Appointment</h3>
+                <p class="text-muted mb-0">Schedule a physician consultation for an existing patient</p>
+            </div>
+            <a href="{{ url_for('appointment_list') }}" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Schedule
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="card-title mb-0 fw-bold text-primary">
+                    <i class="fa-solid fa-calendar-plus me-2"></i> Appointment Booking Form
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row g-3">
+                        <!-- Patient Selection -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Select Patient <span class="text-danger">*</span></label>
+                            <select name="patient_id" class="form-select" required>
+                                <option value="" disabled {% if not preselected_patient %}selected{% endif %}>Choose registered patient...</option>
+                                {% for p in patients %}
+                                    <option value="{{ p.id }}" {% if preselected_patient and preselected_patient|int == p.id %}selected{% endif %}>
+                                        {{ p.name }} ({{ p.patient_uid }}) - {{ p.phone }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="mt-1">
+                                <small class="text-muted">Not registered yet? <a href="{{ url_for('patient_add') }}" class="text-primary text-decoration-none">Add New Patient</a></small>
+                            </div>
+                        </div>
+
+                        <!-- Doctor Selection -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Select Attending Doctor <span class="text-danger">*</span></label>
+                            <select name="doctor_id" class="form-select" required>
+                                <option value="" disabled selected>Choose doctor / specialist...</option>
+                                {% for d in doctors %}
+                                    {% if d.status == 'Active' %}
+                                        <option value="{{ d.id }}">
+                                            {{ d.name }} - {{ d.specialization }} (₹{{ "%.2f"|format(d.consultation_fee) }})
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Date -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Appointment Date <span class="text-danger">*</span></label>
+                            <input type="date" name="appointment_date" class="form-control" required id="appointmentDate">
+                        </div>
+
+                        <!-- Time Slot -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Consultation Time Slot <span class="text-danger">*</span></label>
+                            <select name="appointment_time" class="form-select" required>
+                                <option value="" disabled selected>Select time slot...</option>
+                                <option value="09:00 AM">09:00 AM</option>
+                                <option value="09:30 AM">09:30 AM</option>
+                                <option value="10:00 AM">10:00 AM</option>
+                                <option value="10:30 AM">10:30 AM</option>
+                                <option value="11:00 AM">11:00 AM</option>
+                                <option value="11:30 AM">11:30 AM</option>
+                                <option value="12:00 PM">12:00 PM</option>
+                                <option value="02:00 PM">02:00 PM</option>
+                                <option value="02:30 PM">02:30 PM</option>
+                                <option value="03:00 PM">03:00 PM</option>
+                                <option value="03:30 PM">03:30 PM</option>
+                                <option value="04:00 PM">04:00 PM</option>
+                                <option value="04:30 PM">04:30 PM</option>
+                            </select>
+                        </div>
+
+                        <!-- Symptoms / Chief Complaints -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Chief Complaint / Symptoms</label>
+                            <textarea name="reason" rows="3" class="form-control" placeholder="Describe presenting symptoms, checkup nature, or clinical notes..."></textarea>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('appointment_list') }}" class="btn btn-light border px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fa-solid fa-check me-1"></i> Confirm Booking
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Default date to today
+    document.addEventListener("DOMContentLoaded", function() {
+        const dateInput = document.getElementById("appointmentDate");
+        if (dateInput && !dateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+            dateInput.min = today;
+        }
+    });
+</script>
+{% endblock %}
